@@ -45,12 +45,13 @@ E executando as migrações:
 `python manage.py migrate blog`  
 
 ##### Admin para CRUD  
-Vamos importar o modelo criado anteriormente (`blog/admin`) e vamos registra-lo na pagina de administração.  
+Vamos importar o modelo criado anteriormente (`blog/admin`) e vamos registra-lo na pagina de administração com `admin.site.register(Post)`  
 Para cessar o admin: `127.0.0.1:8000/admin`  
-Para criar superusuário: `python manage.py createsuperuser`
+Para criar superusuário e pode acessá-lo: `python manage.py createsuperuser`  
 
 ### Deploy  
-Adicionar oa `.gitignore`:
+[Checklist de segunrança do DJango;](https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/)  
+Adicionar ao `.gitignore`:
 ```
 *.pyc
 *~
@@ -61,3 +62,95 @@ db.sqlite3
 .DS_Store
 ```  
 add todos: `git add --all .`
+
+**PythonAnywhere**:  
+> Depois de se registrar no PythonAnywhere, você será levada ao seu painel de controle. Encontre o link para a página de "Account" (conta, em português) próximo ao topo no lado direito:
+> em seguida, selecione a guia chamada "API Token" e aperte o botão que diz "Create new API token" (criar novo token API").  
+
+Ir ao Bash, e instalar ferramenta pythonanywhere:
+`pip3.6 install --user pythonanywhere`  
+Agora vamos executar a ferramenta para configurar a nossa aplicação a partir do GitHub automaticamente:
+`pa_autoconfigure_django.py https://github.com/<your-github-username>/my-first-blog.git` (use --nuke) se já tiver usado webapp...  
+
+
+* Baixando o seu código do GitHub;  
+* Criando um virtualenv no PythonAnywhere, igual ao que existe no seu computador  
+* Atualizando o seu arquivo de configuração com algumas configurações sobre o deploy;  
+* Criando um banco de dados no PythonAnywhere usando o comando manage.py migrate;  
+* Criando os seus arquivos estáticos (nós aprenderemos sobre eles mais tarde)  
+* E configurando o PythonAnywhere para servir a sua web app através da sua API.  
+
+Banco de dados separados: Desenvolvimento e deploy. por isso, configurar de novo superuser:
+`python manage.py createsuperuser`  
+
+### URLs  
+> Em Django, usamos algo chamado URLconf (configuração de URLs). URLconf é um conjunto de padrões que o Django vai usar para comparar com a URL recebida para encontrar a resposta correta.
+
+A gestão de URLs são fetas pelo aquivo `urls.py` do **projeto** (não da app, aliás. app nem tem esse arquivo).  
+> Isso significa que para cada URL que começa com admin/, o Django irá encontrar uma view correspondente.
+
+Vamos fazer que o endereço http://127.0.0.1:8000 seja a pagina inicial do blog, exibindo lista de publicações.  
+
+Adicionamos `path('', include('blog.urls'))` ao `urls.py` do projeto.  
+:warning: Não deixe de fazer o import :warning:  
+:warning: Estamos direcionando as requisições para o `blog.urls.py` que **não existe**. Vamos criá-lo. :warning:  
+
+* Criar arquivo `urls.py` na pasta *blog* (ou app) e inserir:  
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.post_list, name='post_list'),
+]
+```   
+
+> Aqui, estamos importando do Django a função url e todas as nossas views do aplicativo blog. E inserindo um primeiro padrão url,
+
+:warning: (**Não temos nenhuma view** ainda, mas chegaremos a isso em um minuto!) :warning:  
+
+No padrão url criado, estamos atribuindo uma view chamada `post_list` à URL raiz. Este padrão dirá ao Django que `views.post_list` é o lugar correto aonde ir se alguém entra em seu site pelo endereço 'http://127.0.0.1:8000 /'.  
+
+* `name='post_list'` é o nome da URL que será usada para identificar a `view`. Podemos usar o mesmo nome ou outro diferente.  
+:warning:  devemos fazer com que os nomes das URLs sejam únicos e fáceis de lembrar. :warning:  
+
+### Views  
+
+> Uma view é o lugar onde nós colocamos a "lógica" da nossa aplicação. Ela vai extrair informações do model que você criou e entregá-las a um template. Nós vamos criar um template no próximo capítulo. Views são apenas funções Python um pouco mais complicadas
+
+Adicionar à `views.py` da pasta blog (ou app): 
+```python
+def post_list(request):
+    return render(request, 'blog/post_list.html', {})
+```  
+
+### Templates  
+Templates são guardados na pasta `templates` dentro do diretpório da sua app. Dentro dele criar uma nova pasta chamada "blog".
+Final:  
+```python
+blog
+└───templates
+    └───blog
+```  
+**Pq criar outra pasta com nome blog** :question:
+>(Você deve estar se perguntando porque nós precisamos de dois diretórios chamados blog - como você descobrirá mais para frente, essa é uma convenção que facilita a nossa vida quando as coisas começam a ficar mais complicadas.)
+
+Criamos o arquivo html chamado `post_list.html`. E o deixamos em branco... Vemos como está o servidor:
+>Se você ainda tem um erro TemplateDoesNotExist, tente reiniciar o seu servidor. Entre na linha de comando, interrompa o servidor pressionando Ctrl+C (Control seguido da tecla C, juntas) e reinicie-o rodando python manage.py runserver.
+
+Sobre HTML:  
+* head é um elemento que contém informações sobre o documento que não são mostradas na tela.  
+* body é um elemento que contém tudo o que é exibido como parte de uma página da web.  
+
+Elementos básicos:
+
+* <h1>Um título</h1> para o título da seção principal exibido na página
+* <h2>Um sub-título</h2> para um título um nível abaixo
+* <h3>Um sub-sub-título</h3> ... e por aí vai, até <h6>
+* <p>Um parágrafo de texto</p>
+* <em>texto</em> enfatiza seu texto
+* <strong>text</strong> enfatiza fortemente seu texto
+* <br> quebra a linha (você não pode digitar nada dentro da tag br e ela não possui uma tag de fechamento correspondente)
+* <a href="https://djangogirls.org">link</a> cria um link
+* <ul><li>primeiro item</li><li>segundo item</li></ul> cria uma lista, exatamente como essa!
+* <div></div> define uma seção da página
