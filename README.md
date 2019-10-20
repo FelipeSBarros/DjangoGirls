@@ -154,3 +154,93 @@ Elementos básicos:
 * <a href="https://djangogirls.org">link</a> cria um link
 * <ul><li>primeiro item</li><li>segundo item</li></ul> cria uma lista, exatamente como essa!
 * <div></div> define uma seção da página
+
+## Atualizando deploy:  
+
+```python
+cd ~/<your-pythonanywhere-domain>.pythonanywhere.com
+git pull
+```  
+
+### QuerySet e ORM  
+>QuerySet (conjunto de busca) é, em essência, uma lista de objetos de um dado modelo. QuerySet permite que você leia os dados a partir de uma base de dados, filtre e ordene.  
+
+Exemplo usando o terminal django
+```python
+python manage.py shell
+
+from blog.models import Post
+Post.objects.all()
+```
+
+**Criando post pelo console django**  
+```python
+from django.contrib.auth.models import User
+me = User.objects.get(username='felipe')
+Post.objects.create(author=me, title='Teste console ', text='teste criacao post pelo console')
+Post.objects.all()
+```  
+
+**Filtro**  
+
+* `Post.objects.filter(author=me)`
+* `Post.objects.filter(title__contains='Teste')` :warning: **Não é case sensitive**  
+> :warning: dois caracteres de sublinhado (_) entre title e contains. O ORM do Django utiliza esta sintaxe para separar nomes de campo ("title") e operações ou filtros (como "contains")  
+
+:warning: com `Post.objects.all()`, todos os post serão resgatados. Inclusive os não publicados.  
+**Para filtrar os posts publicados, podemos usar o campo `published_date`. Para tal, precisaremos importar `timezone`:
+```python
+from django.utils import timezone
+Post.objects.filter(published_date__lte=timezone.now())
+```  
+
+```python
+
+post = Post.objects.get(title="Teste console ")
+post.publish()
+Post.objects.filter(published_date__lte=timezone.now())
+```  
+
+**Ordenando**  
+Para ordenar, usamos o método `order_by('campo')`. ex:
+`Post.objects.order_by('created_date')`  
+:warning: para inverter a ordem, basta iserir `-` como prefixo do campo:  
+`Post.objects.order_by('-created_date')`  
+
+**Consultas Complexas com Encadeamento de Métodos**  
+Um QuerySet pode ser ser invocados num outro QuerySet, o que resultará num novo QuerySet. Dessa forma, você pode combinar seus efeitos encadeando-los juntos:  
+```python
+Post.objects.filter(published_date__lte=timezone.now()).order_by('published_date')
+```  
+
+#### Atualizando view  
+Papel das views: conectar modelos e templates.   
+Vamos precisar pegar os modelos que queremos exibir e passá-los para o template na nossa lista de postagens post_list view. Em uma view, nós decidimos o que (qual modelo) será exibido em um template.  
+
+Vamos adicionar a QuerySet na view, mais específicamente na função `post_list`, adicionando o resultado ao dicionário final do `render`.  
+:warning: falta adiconar ao template a QuerySet  
+
+### Tags de template Django  
+> nos permitem transformar código similar a Python em código HTML para que você possa construir sites dinâmicos mais rápido e mais facilmente.  
+
+:warning: Pra mostrar uma variável em um template do Django, usamos chaves duplas com o nome da variável;  
+O Ajdnago entende essa variável como uma lista de objetos.  Por isso, usaremos um `for` para iterar sobre a lista e apresenta-las:  
+```html
+{% for post in posts %}
+    {{ post }}
+{% endfor %}
+```
+
+Misturando tag HTML com tag de template:
+```html
+{% for post in posts %}
+    <div>
+        <p>published: {{ post.published_date }}</p>
+        <h2><a href="">{{ post.title }}</a></h2>
+        <p>{{ post.text|linebreaksbr }}</p>
+    </div>
+{% endfor %}
+```  
+
+>Você notou que dessa vez nós usamos uma notação um pouco diferente ({{ post.title }} ou {{ post.text }})? Estamos acessando os dados em cada um dos campos que definimos no modelo do Post. Além disso, |linebreaks está passando o texto do post por um filtro, convertendo quebras de linha em parágrafos.  
+

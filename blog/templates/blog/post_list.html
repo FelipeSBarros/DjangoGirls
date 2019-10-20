@@ -8,6 +8,15 @@
         <h1> The blog I made to learn Django</h1>
             <p>Vamos ver até onde posso ir no aprendizado de Django, com tutoril <a href="djangogirls.org">"Django Girls"</a>. <br>
                 Sem comentar que inclui-se nisso, HTML e CSS. </p>
-                <em> Vamos nessa!</em>
+                <p><em> Vamos nessa!</em></p>
+    </body>
+    <body>
+        {% for post in posts %}
+    <div>
+        <p>published: {{ post.published_date }}</p>
+        <h2><a href="">{{ post.title }}</a></h2>
+        <p>{{ post.text|linebreaksbr }}</p>
+    </div>
+{% endfor %}
     </body>
 </html>
