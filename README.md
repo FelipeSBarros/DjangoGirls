@@ -352,4 +352,122 @@ def post_detail(request, pk):
         <p>{{ post.text|linebreaksbr }}</p>
     </div>
 {% endblock %}
+```  
+
+### Atualizando o deploy  
+> :warning: sempre que alteramos nossos arquivos CSS, precisamos rodar um comando extra no servidor para dizer a ele que os atualize. O comando se chama collectstatic.
+
+>Comece ativando seu virtualenv, se ele já não estiver ativo (para isso, o PythonAnywhere usa um comando chamado workon que é bem parecido com o comando source myenv/bin/activate que vosê usa no seu computador):
+
+### Formulários Django  
+> Com formulários, temos poder absoluto sobre nossa interface - podemos fazer quase tudo que pudermos imaginar!  
+
+Vamos criar um ModelForm que salva o resultado do formulário em um determinado modelo. Nesta caso, nosso nodelo de post.  
+:warning: forms têm seu próprio arquivo: `forms.py`  
 ```
+blog
+   └── forms.py
+```  
+*  precisamos importar o módulo de formulários do Django  
+* Precisamos dizer ao Django que esse form é um ModelForm (pro Django fazer algumas mágicas para nós) – forms.ModelForm é o responsável por essa parte.  
+* Em seguida, temos a class Meta em que dizemos ao Django qual modelo deverá ser usado para criar este formulário (model = Post)  
+* Por fim, podemos dizer quais campos devem entrar no nosso formulário. Neste cenário, queremos que apenas o title e o text sejam expostos -- author deve ser a pessoa que está logada no sistema (nesse caso, você!) e created_date deve ser configurado automaticamente quando criamos um post (no código)  
+
+:warning: Tudo o que precisamos fazer agora é usar o formulário em uma view e mostrá-lo em um template. Mas antes: criaremos um link para a página, uma URL, uma view e um template.  
+
+
+**Link para a página com o formulário**  
+Adicionaremos à template `base.html`:
+`<a href="{% url 'post_new' %}" class="top-menu"><span class="glyphicon glyphicon-plus"></span></a>`  
+Note que queremos chamar nossa nova view de post_new. A classe "glyphicon glyphicon-plus" é fornecida pelo tema (bootstrap) que estamos usando, e nos mostrará um sinal de mais.  
+
+
+**URL**  
+Em `blog/urls.py`: 
+`path('post/new/', views.post_new, name='post_new'),`  
+
+**Views**  
+Em `blog/views.py `:
+```html
+from .forms import PostForm
+...
+def post_new(request):
+    form = PostForm()
+    return render(request, 'blog/post_edit.html', {'form': form})  
+```  
+>Para criar um novo formulario Post, devemos chamar PostForm() e passá-lo para o template. Voltaremos a esta view depois, mas por enquanto, vamos criar um template para o formulário.  
+
+**Template**  
+> Precisamos criar um arquivo post_edit.html na pasta blog/templates/blog. Para fazer o formulário funcionar, precisamos de várias coisas:  
+>* Temos que exibir o formulário. Podemos fazer isso com (por exemplo) {{ form.as_p }}.  
+>* A linha acima precisa estar dentro de uma tag HTML form: <form method="POST">...</form>.  
+>* Precisamos de um botão Salvar. Fazemos isso com um botão HTML: <button type="submit">Save</button>.  
+>* E finalmente, depois de abrir a tag <form ...>, precisamos adicionar {% csrf_token %}. 
+>:warning: Isso é muito importante, pois é isso que torna o nosso formulário seguro! Se você esquecer esta parte, o Django vai reclamar quando você tentar salvar o formulário.  
+
+**Salvando o formulário**  
+> Lembra que no arquivo HTML, nossa definição de form incluiu a variável method="POST"? Todos os campos vindos do "form" estarão disponíveis agora em request.POST  
+
+>Em nossa view temos duas situações diferentes com as quais lidar: primeiro, quando acessamos a página pela primeira vez e queremos um formulário em branco e segundo, quando voltamos para a view com todos os dados do formulário que acabamos de digitar. 
+
+Em `blog/views.py`:
+```python
+def post_new(request):
+     if request.method == "POST":
+         form = PostForm(request.POST)
+         if form.is_valid():
+             post = form.save(commit=False)
+             post.author = request.user
+             post.published_date = timezone.now()
+             post.save()
+             return redirect('post_detail', pk=post.pk)
+     else:
+         form = PostForm()
+     return render(request, 'blog/post_edit.html', {'form': form})
+```  
+>:warning: checa se o formulário está correto (todos os campos requeridos estão prontos e valores incorretos não serão salvos)  
+
+>:warning: commit=False significa que não queremos salvar o modelo de Post ainda.  
+
+>:warning: `post.save()` vai preservar as alterações (adicionando o autor) e é criado um novo post no blog!  
+
+>:warning: Adicionando `return redirect('post_detail', pk=post.pk)` para redirecionar após salvar o post.    
+
+### Editando Formulário  
+> Vamos criar algumas coisas importantes rapidinho:
+
+em `blog/templates/blog/post_detail.html`, após o `{% endif %}:
+`<a class="btn btn-default" href="{ $ url 'post_edit' pk=post.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>`
+
+em `blog/urls.py`:  
+`path('post/<int:pk>/edit/', views.post_edit, name='post_edit'),`  
+
+O que falta é uma view:  
+```python
+def post_edit(request, pk):
+...
+post = get_object_or_404(Post, pk=pk) 
+...
+form = PostForm(request.POST, instance=post)
+...
+form = PostForm(instance=post)
+```
+Bem parecido com o a view `post_view`, com alguns detalhes:
+1. quando criamos um formulário, passamos este post como uma instância tanto quando salvamos o formulário;  
+1. como quando apenas abrimos um formulário para editar esse post  
+
+### Segurança  
+> Vamos fazer com que o botão de criar post apareça para quem está logado e para mais ninguém.  
+
+Em blog/templates/blog/base.html, procure nossa div page-header e a tag de link que você colocou mais cedo.  
+Incluir: `{% if %}`:
+```python
+{% if user.is_authenticated %}
+    <a href="{% url 'post_new' %}" class="top-menu"><span class="glyphicon glyphicon-plus"></span></a>
+{% endif %}
+
+```
+
+:warning: Este {% if %} fará com que o link seja enviado ao navegador se o usuário que requisitou a página estiver logado. Isso não protege o blog completamente da criação de um novo post, mas é um bom começo.  
+
+Faremos o mesmo para o icone de editar.
