@@ -144,16 +144,17 @@ Sobre HTML:
 
 Elementos básicos:
 
-* <h1>Um título</h1> para o título da seção principal exibido na página
-* <h2>Um sub-título</h2> para um título um nível abaixo
-* <h3>Um sub-sub-título</h3> ... e por aí vai, até <h6>
-* <p>Um parágrafo de texto</p>
-* <em>texto</em> enfatiza seu texto
-* <strong>text</strong> enfatiza fortemente seu texto
-* <br> quebra a linha (você não pode digitar nada dentro da tag br e ela não possui uma tag de fechamento correspondente)
-* <a href="https://djangogirls.org">link</a> cria um link
-* <ul><li>primeiro item</li><li>segundo item</li></ul> cria uma lista, exatamente como essa!
-* <div></div> define uma seção da página
+* \<h1>Um título</h1> para o título da seção principal exibido na página
+* \<h2>Um sub-título</h2> para um título um nível abaixo
+* \<h3>Um sub-sub-título</h3> ... e por aí vai, até <h6>
+* \<p>Um parágrafo de texto</p>
+* \<em>texto</em> enfatiza seu texto
+* \<strong>text</strong> enfatiza fortemente seu texto
+* \<br> quebra a linha (você não pode digitar nada dentro da tag br e ela não possui uma tag de fechamento correspondente)
+* \<a href="https://djangogirls.org">link</a> cria um link
+* \<ul>\<li>primeiro item\</li>  
+\<li>segundo item\</li>\</ul>  
+* \<div>\</div> define uma seção da página
 
 ## Atualizando deploy:  
 
@@ -244,3 +245,111 @@ Misturando tag HTML com tag de template:
 
 >Você notou que dessa vez nós usamos uma notação um pouco diferente ({{ post.title }} ou {{ post.text }})? Estamos acessando os dados em cada um dos campos que definimos no modelo do Post. Além disso, |linebreaks está passando o texto do post por um filtro, convertendo quebras de linha em parágrafos.  
 
+### CSS  
+Cascading Style Sheets (CSS - Folhas de Estilo em Cascata, em português);  
+Em um arquivo CSS, nós determinamos estilos para elementos do arquivo HTML.    
+Vamos usar o [Bootstrap](https://getbootstrap.com/)    
+
+Add na `<head>` do html:
+```html
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+```  
+
+**Arquivos Estáticos**  
+* são todos os seus CSS e imagens. Seu conteúdo não depende do contexto de requisição e será o mesmo para todos os usuários.  
+Vamos adicionar alguns arquivos estáticos à nossa app'`blog`, uma vez que o Django já sabe onde encontrá-lo.  
+
+Criar novos diretórios:
+```
+djangogirls
+└─── blog
+     └─── static
+          └─── css
+               └─── blog.css
+```  
+
+**Vamos mudar a cor do nosso cabeçalho:**  
+Adicionar ao blog.css:  
+```
+h1 a, h2 a {
+     color: #C25100; 
+}
+```  
+
+h1 a é um seletor CSS. Isto significa que estamos aplicando nossos estilos a qualquer elemento um dentro de um elemento h1; o seletor h2 a faz a mesma coisa com elementos h2. Então quando tivermos algo como um \<h1>\<a href="">link\</a>\</h1>, o estilo h1 a será aplicado.  
+Você pode se lembrar desses nomes porque são a mesma coisa que as tags da seção HTML. a, h1 e body são exemplos de nomes de elementos. Também identificamos elementos pelo atributo class ou pelo atributo id. Class e id são nomes que você mesma dá ao elemento. Classes definem grupos de elementos e ids apontam para elementos específicos. Por exemplo, a tag a seguir pode ser identificada usando a tag de nome a, a classe external_link ou o id de link_to_wiki_page  
+
+:warning: Nós também precisamos dizer ao nosso template HTML que adicionamos algum CSS  
+Na primeira linha do HTML adicionar `{% load static %}` e entre as linhas `head`: `<link rel="stylesheet" href="{% static 'css/blog.css' %}">`  
+  
+Dando uma margem um pouco maior ao lado esquerdo da nossa pagina.  
+```html
+body {
+    padding-left: 15px;
+}
+```  
+
+Alterando a fonte. Add no css::  
+`<link href="//fonts.googleapis.com/css?family=Lobster&subset=latin,latin-ext" rel="stylesheet" type="text/css">`
+
+:warning: Agora, adicionaremos blocos de declaração a seletores diferentes. Seletores começando com . se referem às classes.  
+
+### Estendendo os templates  
+Template extending - extensão de templates: Significa que você pode usar as mesmas partes do seu HTML em diferentes páginas do seu site.  
+
+**template base**  
+```html
+blog
+└───templates
+    └───blog
+            base.html
+            post_list.html
+```  
+
+:warning: extendemos o template `post_list.html` que herda o `base.html`  
+
+### Ampliando aplicação  
+**Criando link para detalhes do post**  
+`<h2><a href=" {% url 'post_detail' pk=post.pk %}">{{ post.title }}</a></h2>`  
+Estamos usando as tags de template do Django. Dessa vez, usamos uma que cria uma URL para nós! A parte post_detail significa que o Django espera uma URL no arquivo blog/urls.py com o nome definido como name='post_detail'  
+Acessamos a chave primária escrevendo post.pk, do mesmo modo que podemos acessar outros campos (title, author, etc.) no nosso objeto de Post!  
+Agora temos que criar uma viw `post_details`  
+
+**Criando uma url**  
+A ideia é que seja apresentada em: `http://127.0.0.1:8000/post/1/`  
+
+A parte post/<int:pk>/ especifica um padrão de URL – vamos explicar:
+* `post/` significa apenas que a URL deve começar com a palavra post seguida por /. Até aqui, tudo bem.  
+* `<int:pk>` – essa parte é um pouco mais complicada. Ela nos diz que o Django espera um objeto do tipo inteiro e que vai transferi-lo para a view como uma variável chamada pk.  
+* / – por fim, precisamos adicionar uma / ao final da nossa URL.  
+
+>Isso significa que se você digitar http://127.0.0.1:8000/post/5/ em seu navegador, o Django vai entender que você está procurando uma view chamada post_detail e vai transferir a informação de que pk é igual a 5 para essa view.  
+
+**Adicionando a view de detalhes do post**  
+Em views:  
+```python
+from django.shortcuts import render, get_object_or_404
+...
+def post_detail(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    return render(request, 'blog/post_detail.html', {'post': post})
+
+```
+
+**Criando um template para os detalhes do post**  
+```html
+{% extends 'blog/base.html' %}
+
+{% block content %}
+    <div class="post">
+        {% if post.published_date %}
+            <div class="date">
+                {{ post.published_date }}
+            </div>
+        {% endif %}
+        <h2>{{ post.title }}</h2>
+        <p>{{ post.text|linebreaksbr }}</p>
+    </div>
+{% endblock %}
+```
