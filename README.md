@@ -189,14 +189,13 @@ Post.objects.all()
 > :warning: dois caracteres de sublinhado (_) entre title e contains. O ORM do Django utiliza esta sintaxe para separar nomes de campo ("title") e operações ou filtros (como "contains")  
 
 :warning: com `Post.objects.all()`, todos os post serão resgatados. Inclusive os não publicados.  
-**Para filtrar os posts publicados, podemos usar o campo `published_date`. Para tal, precisaremos importar `timezone`:
+**Para filtrar os posts publicados**, podemos usar o campo `published_date`. Para tal, precisaremos importar `timezone`:
 ```python
 from django.utils import timezone
 Post.objects.filter(published_date__lte=timezone.now())
 ```  
 
 ```python
-
 post = Post.objects.get(title="Teste console ")
 post.publish()
 Post.objects.filter(published_date__lte=timezone.now())
@@ -225,7 +224,7 @@ Vamos adicionar a QuerySet na view, mais específicamente na função `post_list
 > nos permitem transformar código similar a Python em código HTML para que você possa construir sites dinâmicos mais rápido e mais facilmente.  
 
 :warning: Pra mostrar uma variável em um template do Django, usamos chaves duplas com o nome da variável;  
-O Ajdnago entende essa variável como uma lista de objetos.  Por isso, usaremos um `for` para iterar sobre a lista e apresenta-las:  
+O Django entende essa variável como uma lista de objetos.  Por isso, usaremos um `for` para iterar sobre a lista e apresenta-las:  
 ```html
 {% for post in posts %}
     {{ post }}
