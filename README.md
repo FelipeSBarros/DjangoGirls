@@ -1,5 +1,14 @@
 ## Django girls Tutorial
 
+### Venv
+
+```shell script
+python3 -m venv .djangogirls
+source .djangogirls/bin/activate
+pip install -r requirements.txt 
+```
+
+### Conda
 ```shell script
 conda create -n djangogirls python django 
 # conda env export > environments.yml
